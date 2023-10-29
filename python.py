@@ -3,7 +3,7 @@ import sys
 import csv
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt #https://matplotlib.org/3.5.3/api/_as_gen/matplotlib.pyplot.html    
 from sklearn.model_selection import train_test_split #https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html#sklearn.model_selection.train_test_split
 from sklearn.tree import DecisionTreeClassifier #https:/https://github.com/microsoft/pyright/blob/main/docs/configuration.md#reportMissingModuleSource/scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier #https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html#sklearn.neural_network.MLPClassifier
@@ -18,15 +18,16 @@ def string_to_int(str) -> int:
         return 5
     return output
 
-def plot_class_distribution(data, dataset_name):
-    class_counts = data['target_column'].value_counts()
-    class_percentage = class_counts / len(data)
-    plt.bar(class_counts.index, class_percentage)
-    plt.xlabel("Class")
-    plt.ylabel("Percentage")
-    plt.title(f"{dataset_name} Class Distribution")
-    plt.savefig(f"{dataset_name}-classes.gif")
-    plt.show()
+def plot_instance_class_distribution(data, dataset_name):
+    if dataset_name == 'penguins Dataset':
+        class_counts = data['species'].value_counts() if dataset_name == 'penguins' else data['sex'].value_counts()
+        class_percentage = class_counts / len(data)
+        plt.bar(class_counts.index, class_percentage)
+        plt.xlabel("Class")
+        plt.ylabel("Percentage")
+        plt.title(f"{dataset_name} Class Distribution")
+        #plt.savefig(f"{dataset_name}-classes.gif")
+        plt.show()
 
 def read_csv(file_path):
     try:
@@ -51,17 +52,19 @@ def main():
         if user_input and user_choice <= 3:
             if user_choice == 1:
                 print("abalone.csv has been selected")
-                read_csv(abalone_data)
+                plot_instance_class_distribution(abalone_data, 'abalone Dataset')
+                #read_csv(abalone_data) -- old
                 break
             elif user_choice == 2:
                 print("penguins.csv has been selected")
-                #read_csv(penguins_file_path)
+                plot_instance_class_distribution(penguin_data, 'penguins Dataset')
+                #read_csv(penguins_file_path)  -- old
                 break
             elif user_choice == 3:
                 while(True):
                     user_input_custom = input("Custom file has been selects\nPlease enter the file path and name that you want to review")
                     if user_input_custom: 
-                        #read_csv(user_input)
+                        #read_csv(user_input)  -- old
                         break
                     else:
                         print("[Error]: User input is empty. Please enter a valid file.")    
