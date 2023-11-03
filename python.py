@@ -59,7 +59,10 @@ def abaloneSteps(abalone):
     #2:
     plot_distribution(abalone, "Type", "abalone-classes.png")
 
-def penguinsSteps(penguins):
+def penguinsSteps(penguin_data):
+    #1: Convert Categorical Features for Penguins into 1 hot vector
+    penguins = pd.get_dummies(penguin_data, columns=['island', 'sex'], drop_first=True) #drop first used to drop the species column
+    
     #2:
     plot_distribution(penguins, "species", "penguins-classes.png")
     
@@ -68,12 +71,12 @@ def penguinsSteps(penguins):
     y_penguins = penguins['species']
     X_train_penguins, X_test_penguins, y_train_penguins, y_test_penguins = train_test_split(X_penguins, y_penguins)
     #4a): Base-DT for Penguins
-    base_dt = DecisionTreeClassifier(random_state=42)
-    base_dt.fit(X_train_penguins, y_train_penguins)
-    y_pred_base_dt = base_dt.predict(X_test_penguins)
+    baseDT = DecisionTreeClassifier() #TODO: May need to add random state
+    baseDT.fit(X_train_penguins, y_train_penguins)
+    y_pred_baseDT = baseDT.predict(X_test_penguins)
     print('Base-DT Performance for Penguins:')
     #Comparing true results with prediction
-    print(classification_report(y_test_penguins, y_pred_base_dt, zero_division=1))
+    print(classification_report(y_test_penguins, y_pred_baseDT, zero_division=1))
 
 def main():
     script_directory = os.path.dirname(os.path.abspath(__file__))  # Get the directory/filepath of the script
@@ -82,8 +85,7 @@ def main():
     penguin_data = pd.read_csv(penguins_file_path)
     abalone_data = pd.read_csv(abalone_file_path)
     
-    #2: Convert Categorical Features for Penguins into 1 hot vector
-    penguins = pd.get_dummies(penguin_data, columns=['island', 'sex'], drop_first=True) #drop first used to drop the species column
+
     
     while(True):
         user_input = input("Please select one of the options below to check a file.\n(1) abalone.csv\n(2) penguins.csv\n(3) custome file (File path is required)\n")
@@ -91,13 +93,13 @@ def main():
         if user_input and user_choice <= 3:
             if user_choice == 1:
                 print("abalone.csv has been selected")
-                plot_instance_class_distribution(abalone_data, 'abalone Dataset')
+                plot_instance_class_distribution(abalone_data, 'Abalone Dataset')
                 abaloneSteps(abalone_data)
                 #read_csv(abalone_data) -- old
                 break
             elif user_choice == 2:
                 print("penguins.csv has been selected")
-                plot_instance_class_distribution(penguin_data, 'penguins Dataset')
+                plot_instance_class_distribution(penguin_data, 'Penguins Dataset')
                 penguinsSteps(penguin_data)
                 #read_csv(penguins_file_path)  -- old
                 break
