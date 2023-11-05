@@ -70,6 +70,7 @@ def penguinsSteps(penguin_data):
     X_penguins = penguins.drop('species', axis=1)
     y_penguins = penguins['species']
     X_train_penguins, X_test_penguins, y_train_penguins, y_test_penguins = train_test_split(X_penguins, y_penguins)
+
     #4a): Base-DT for Penguins
     baseDT = DecisionTreeClassifier() #TODO: May need to add random state
     baseDT.fit(X_train_penguins, y_train_penguins)
@@ -77,6 +78,12 @@ def penguinsSteps(penguin_data):
     print('Base-DT Performance for Penguins:')
     #Comparing true results with prediction
     print(classification_report(y_test_penguins, y_pred_baseDT, zero_division=1))
+
+    #4c) Base MLP for Penguins
+    baseMLP = MLPClassifier(hidden_layer_sizes=(100,100), activation='logistic', solver='sgd')
+    baseMLP.fit(X_train_penguins, y_train_penguins) #trains the data based on both training subsets of input and output
+    y_pred_baseMLP = baseMLP.predict(X_test_penguins) #provides an output (species) prediction based on a input test subset
+    print("Base-MLP Penguin Performance\n", classification_report(y_test_penguins, y_pred_baseMLP, zero_division=1)) #evaluating the predicted species subset versus the actual species subset
 
 def main():
     script_directory = os.path.dirname(os.path.abspath(__file__))  # Get the directory/filepath of the script
