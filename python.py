@@ -61,6 +61,50 @@ def abaloneSteps(abalone):
     #2:
     plot_distribution(abalone, "Type", "abalone-classes.png")
 
+    #3: split data
+    X_abalone = abalone.drop('Type', axis=1)
+    y_abalone = abalone['Type']
+    X_train_abalone, X_test_abalone, y_train_abalone, y_test_abalone = train_test_split(X_abalone, y_abalone)
+    #4a): Base-DT for Penguins
+    baseDT = DecisionTreeClassifier() #TODO: May need to add random state
+    baseDT.fit(X_train_abalone, y_train_abalone)
+    y_pred_baseDT = baseDT.predict(X_test_abalone)
+    print('Base-DT Performance for Penguins:')
+    #Comparing true results with prediction
+    print(classification_report(y_test_abalone, y_pred_baseDT, zero_division=1))
+
+    #4b): Top-DT for Abalone
+    # Define hyperparameters to search for
+    param_grid = {
+        'criterion': ['gini', 'entropy'], #Using gini or entorpy as mention in the Insturctions for the decisionTree
+        'max_depth': [None, 10, 100],  # 2 different values of our choose including a ”None” option. Values were chosen random.
+        'min_samples_split': [2, 5, 20],  # 3 different values of our choice. Values were chosen random.
+    }
+
+    # Create a Decision Tree classifier like in 4a from Scikit-Learn
+    topDT = DecisionTreeClassifier()
+
+    # Finding the hyperparameters using a GridSearchCv function from Scikit-Learns.
+    grid_search = GridSearchCV(topDT, param_grid, cv=5, scoring='accuracy')
+    grid_search.fit(X_train_abalone, y_train_abalone)
+
+    # Getting the best hyperparameters based on our grid_search.
+    best_params = grid_search.best_params_ #the .best_params_ gives the best results on the hold out data
+    print('Best Hyperparameters:', best_params)
+
+    # Train the Top-DT with the best hyperparameters
+    topDT = DecisionTreeClassifier(**best_params) #The two stars **unpacks the variable, equivalent to placing it as DecisionTreeClassifier(criterion='entropy', max_depth=10, min_samples_split=5). Though, we don't know the best parameters. 
+    topDT.fit(X_train_abalone, y_train_abalone)
+    y_pred_topDT = topDT.predict(X_test_abalone)
+
+    print('Top-DT Performance for Penguins:')
+    print(classification_report(y_test_abalone, y_pred_topDT, zero_division=1))
+
+    #Showing the decision tree graphically (depth is restricted for visualization purposes)
+    plt.figure(figsize=(10, 8)) #10 inches by 8 inches. Reduce the figure size if the monitor/screen is small.
+    plot_tree(topDT, filled=True, feature_names=X_abalone.columns, class_names=y_abalone.unique()) # topDT is the tree model that we are showing, Filled is for color, 
+    plt.show()
+
 def penguinsSteps(penguin_data):
     #1: Convert Categorical Features for Penguins into 1 hot vector
     penguins = pd.get_dummies(penguin_data, columns=['island', 'sex'], drop_first=True) #drop first used to drop the species column
@@ -109,7 +153,7 @@ def penguinsSteps(penguin_data):
 
     #Showing the decision tree graphically (depth is restricted for visualization purposes)
     plt.figure(figsize=(10, 8)) #10 inches by 8 inches. Reduce the figure size if the monitor/screen is small.
-    plot_tree(topDT, filled=True, feature_names=X_penguins.columns, class_names=y_penguins.unique())
+    plot_tree(topDT, filled=True, feature_names=X_penguins.columns, class_names=y_penguins.unique()) # topDT is the tree model that we are showing, Filled is for color, 
     plt.show()
     #plot_distribution(penguins, "species", "penguins-classes-topDT.png")
 
