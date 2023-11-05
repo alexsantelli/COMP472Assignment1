@@ -72,7 +72,7 @@ def penguinsSteps(penguin_data):
     X_train_penguins, X_test_penguins, y_train_penguins, y_test_penguins = train_test_split(X_penguins, y_penguins)
 
     #4a): Base-DT for Penguins
-    baseDT = DecisionTreeClassifier() #TODO: May need to add random state
+    baseDT = DecisionTreeClassifier()
     baseDT.fit(X_train_penguins, y_train_penguins)
     y_pred_baseDT = baseDT.predict(X_test_penguins)
     print('Base-DT Performance for Penguins:')
@@ -84,7 +84,24 @@ def penguinsSteps(penguin_data):
     baseMLP.fit(X_train_penguins, y_train_penguins) #trains the data based on both training subsets of input and output
     y_pred_baseMLP = baseMLP.predict(X_test_penguins) #provides an output (species) prediction based on a input test subset
     print("Base-MLP Penguin Performance\n", classification_report(y_test_penguins, y_pred_baseMLP, zero_division=1)) #evaluating the predicted species subset versus the actual species subset
+    
+    #4d)
+    #Instructions on how to conduct search (Mapping)
+    MLPparams = {
+    'activation': ['logistic', 'tanh', 'relu'], #activation functions
+    'hidden_layer_sizes': [(30, 50), (10, 10, 10)], #Network architectures
+    'solver': ['adam', 'sgd'] #Solver for weight distribution
+    }
+    #Use GridSearchCV to perform an exhaustive search using acuracy as the scoring.
+    topMLP = GridSearchCV(MLPClassifier(), MLPparams, scoring='accuracy')
+    #To train the model
+    topMLP.fit(X_train_penguins, y_train_penguins)
+    print('Top-MLP Best Parameters:', topMLP.best_params_)
+    y_pred_topMLP = topMLP.predict(X_test_penguins)
+    print('Top-MLP Performance for Penguins:')
+    print(classification_report(y_test_penguins, y_pred_topMLP, zero_division=1))
 
+   
 def main():
     script_directory = os.path.dirname(os.path.abspath(__file__))  # Get the directory/filepath of the script
     abalone_file_path = os.path.join(script_directory, "abalone.csv")
