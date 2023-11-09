@@ -101,6 +101,47 @@ def penguinsSteps(penguin_data):
     print('Top-MLP Performance for Penguins:')
     print(classification_report(y_test_penguins, y_pred_topMLP, zero_division=1))
 
+
+
+
+def abaloneSteps(abalone):
+    #2:
+    plot_distribution(abalone, "Type", "abalone-classes.png")
+    
+    #3 split data
+    x = abalone.drop('Type', axis=1)
+    y = abalone['Type']
+    x_train, x_test, y_train, y_test = train_test_split(x, y)
+    #4a): Base-DT for abalone
+    baseDT = DecisionTreeClassifier()
+    baseDT.fit(x_train, y_train)
+    y_pred_baseDT = baseDT.predict(x_test)
+    print('Base-DT Performance for abalone:')
+    #Comparing true results with prediction
+    print(classification_report(y_test, y_pred_baseDT, zero_division=1))
+
+    #4c) Base MLP for abalone
+    baseMLP = MLPClassifier(hidden_layer_sizes=(100,100), activation='logistic', solver='sgd')
+    baseMLP.fit(x_train, y_train) #trains the data based on both training subsets of input and output
+    y_pred_baseMLP = baseMLP.predict(x_test) #provides an output (type) prediction based on a input test subset
+    print("Base-MLP abalone Performance\n", classification_report(y_test, y_pred_baseMLP, zero_division=1)) #evaluating the predicted type subset versus the actual type subset
+    
+    #4d)
+    #Instructions on how to conduct search (Mapping)
+    MLPparams = {
+    'activation': ['logistic', 'tanh', 'relu'], #activation functions
+    'hidden_layer_sizes': [(30, 50), (10, 10, 10)], #Network architectures
+    'solver': ['adam', 'sgd'] #Solver for weight distribution
+    }
+    #Use GridSearchCV to perform an exhaustive search using acuracy as the scoring.
+    topMLP = GridSearchCV(MLPClassifier(), MLPparams, scoring='accuracy')
+    #To train the model
+    topMLP.fit(x_train, y_train)
+    print('Top-MLP Best Parameters:', topMLP.best_params_)
+    y_pred_topMLP = topMLP.predict(x_test)
+    print('Top-MLP Performance for Penguins:')
+    print(classification_report(y_test, y_pred_topMLP, zero_division=1))
+
    
 def main():
     script_directory = os.path.dirname(os.path.abspath(__file__))  # Get the directory/filepath of the script
