@@ -128,9 +128,8 @@ def topDT(name:str, x, y):
 
     #Showing the decision tree graphically (depth is restricted for visualization purposes)
     plt.figure(figsize=(10, 8)) #10 inches by 8 inches. Reduce the figure size if the monitor/screen is small.
-    plot_tree(topDT, filled=True, feature_names=x.columns, class_names=y.unique()) # topDT is the tree model that we are showing, Filled is for color, 
+    plot_tree(topDT, filled=True, feature_names=x.columns, class_names=y.unique().astype(str)) # topDT is the tree model that we are showing, Filled is for color, 
     plt.show()
-    #plot_distribution(penguins, "species", "penguins-classes-topDT.png")
     return accuracy, macro_f1, weighted_f1
 
 def baseMLP(name:str, x, y):
@@ -159,7 +158,7 @@ def topMLP(name:str, x, y):
     'solver': ['adam', 'sgd'] #Solver for weight distribution
     }
     #Use GridSearchCV to perform an exhaustive search using acuracy as the scoring.
-    topMLP = GridSearchCV(MLPClassifier(), topMLPparams, scoring='accuracy')
+    topMLP = GridSearchCV(MLPClassifier(max_iter=1000), topMLPparams, scoring='accuracy') #setting max_iter for convergence warnings
     #To train the model
     topMLP.fit(x_train, y_train)
     print('Top-MLP Best Parameters:', topMLP.best_params_)
@@ -175,11 +174,18 @@ def topMLP(name:str, x, y):
     print(classification_report(y_test, y_pred_topMLP, zero_division=1))
     return accuracy, macro_f1, weighted_f1
         
-def penguinsSteps(penguin_data):
-    
-    #1: Convert Categorical Features for Penguins into 1 hot vector
-    penguins = pd.get_dummies(penguin_data, columns=['island', 'sex'], drop_first=True) #drop first used to drop the species column
-    
+def penguinsSteps(penguin_data, user_choice):
+
+    if user_choice == 1:
+        #1: Convert Categorical Features for Penguins into 1 hot vector
+        penguins = pd.get_dummies(penguin_data, columns=['island', 'sex'], drop_first=True) #drop first used to drop the species column
+    elif user_choice == 2:
+        #2: manual categorizations
+        penguins = penguin_data
+        penguins['species'] = penguins['species'].astype('category').cat.codes
+        penguins['island'] = penguins['island'].astype('category').cat.codes
+        penguins['sex'] = penguins['sex'].astype('category').cat.codes
+
     #2:
     plot_distribution(penguins, "species", "penguins-classes.png")
     
@@ -333,21 +339,26 @@ def main():
     abalone_data = pd.read_csv(abalone_file_path)
     
     while(True):
-        user_input = input("Please select one of the options below to check a file.\n(1) abalone.csv\n(2) penguins.csv\n")
-        user_choice = string_to_int(user_input)
-        if user_input and user_choice <= 3:
-            if user_choice == 1:
-                print("abalone.csv has been selected")
-                abaloneSteps(abalone_data)
+        user_choice = string_to_int(input("Please select one of the options below to check a file.\n(1) abalone.csv\n(2) penguins.csv\n"))
+        if user_choice == 1:
+            print("abalone.csv has been selected")
+            abaloneSteps(abalone_data)
+            break
+        elif user_choice == 2:
+            print("penguins.csv has been selected")
+            user_choice2 = string_to_int(input("Select which way the Penguins database will converted:\n(1) 1-hot vector \n(2) categorize manually\n"))
+            if user_choice2 == 1:
+                print("1-hot vector will be used")
+                penguinsSteps(penguin_data, user_choice2)
                 break
-            elif user_choice == 2:
-                print("penguins.csv has been selected")
-                penguinsSteps(penguin_data)
-                break  
+            elif user_choice2 == 2:
+                print("Manual conversion will be used")
+                penguinsSteps(penguin_data, user_choice2)
+                break
             else:
                 print("[Error]: Invalide option has been selected.")
         else:
-            print("[Error]: User input is empty. Please enter a valid file.")
+            print("[Error]: Invalide option has been selected.")
 
 if __name__ == "__main__":
     main()
