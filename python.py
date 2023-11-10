@@ -44,8 +44,20 @@ def read_csv(file_path):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
+def evaluate(y_test, y_pred):
+    accuracy = accuracy_score(y_test, y_pred)
+    macro_f1 = f1_score(y_test, y_pred, average='macro')
+    weighted_f1 = f1_score(y_test, y_pred, average='weighted')
+    return accuracy, macro_f1, weighted_f1
+
+def report_performance(dataset_name, model_name, accuracy, macro_f1, weighted_f1):
+    with open(f'{dataset_name}-performance.txt', 'a') as file:
+        file.write(f"{model_name} Accuracy: {accuracy}\n")
+        file.write(f"{model_name} Macro F1: {macro_f1}\n")
+        file.write(f"{model_name} Weighted F1: {weighted_f1}\n")
 
 def penguinsSteps(penguin_data):
+    
     #1: Convert Categorical Features for Penguins into 1 hot vector
     penguins = pd.get_dummies(penguin_data, columns=['island', 'sex'], drop_first=True) #drop first used to drop the species column
     
@@ -53,17 +65,19 @@ def penguinsSteps(penguin_data):
     plot_distribution(penguins, "species", "penguins-classes.png")
     
     #3: split data
-    X_penguins = penguins.drop('species', axis=1)
-    y_penguins = penguins['species']
-    X_train_penguins, X_test_penguins, y_train_penguins, y_test_penguins = train_test_split(X_penguins, y_penguins)
+    x = penguins.drop('species', axis=1)
+    y = penguins['species']
+    x_train, x_test, y_train, y_test = train_test_split(x, y)
 
     #4a): Base-DT for Penguins
     baseDT = DecisionTreeClassifier()
-    baseDT.fit(X_train_penguins, y_train_penguins)
-    y_pred_baseDT = baseDT.predict(X_test_penguins)
+    baseDT.fit(x_train, y_train)
+    y_pred_baseDT = baseDT.predict(x_test)
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_baseDT)
+    report_performance("penguin" ,"Base-DT", accuracy, macro_f1, weighted_f1)
     print('Base-DT Performance for Penguins:')
     #Comparing true results with prediction
-    print(classification_report(y_test_penguins, y_pred_baseDT, zero_division=1))
+    print(classification_report(y_test, y_pred_baseDT, zero_division=1))
 
     #4b): Top-DT for Penguins
     # Define hyperparameters to search for
@@ -78,7 +92,7 @@ def penguinsSteps(penguin_data):
 
     # Finding the hyperparameters using a GridSearchCv function from Scikit-Learns.
     grid_search = GridSearchCV(topDT, param_grid, cv=5, scoring='accuracy')
-    grid_search.fit(X_train_penguins, y_train_penguins)
+    grid_search.fit(x_train, y_train)
 
     # Getting the best hyperparameters based on our grid_search.
     best_params = grid_search.best_params_ #the .best_params_ gives the best results on the hold out data
@@ -86,41 +100,43 @@ def penguinsSteps(penguin_data):
 
     # Train the Top-DT with the best hyperparameters
     topDT = DecisionTreeClassifier(**best_params) #The two stars **unpacks the variable, equivalent to placing it as DecisionTreeClassifier(criterion='entropy', max_depth=10, min_samples_split=5). Though, we don't know the best parameters. 
-    topDT.fit(X_train_penguins, y_train_penguins)
-    y_pred_topDT = topDT.predict(X_test_penguins)
-
+    topDT.fit(x_train, y_train)
+    y_pred_topDT = topDT.predict(x_test)
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_topDT)
+    report_performance("penguin" ,"Top-DT", accuracy, macro_f1, weighted_f1)
     print('Top-DT Performance for Penguins:')
-    print(classification_report(y_test_penguins, y_pred_topDT, zero_division=1))
+    print(classification_report(y_test, y_pred_topDT, zero_division=1))
 
     #Showing the decision tree graphically (depth is restricted for visualization purposes)
     plt.figure(figsize=(10, 8)) #10 inches by 8 inches. Reduce the figure size if the monitor/screen is small.
-    plot_tree(topDT, filled=True, feature_names=X_penguins.columns, class_names=y_penguins.unique()) # topDT is the tree model that we are showing, Filled is for color, 
+    plot_tree(topDT, filled=True, feature_names=x.columns, class_names=y.unique()) # topDT is the tree model that we are showing, Filled is for color, 
     plt.show()
     #plot_distribution(penguins, "species", "penguins-classes-topDT.png")
     
     #4c) Base MLP for Penguins
     baseMLP = MLPClassifier(hidden_layer_sizes=(100,100), activation='logistic', solver='sgd')
-    baseMLP.fit(X_train_penguins, y_train_penguins) #trains the data based on both training subsets of input and output
-    y_pred_baseMLP = baseMLP.predict(X_test_penguins) #provides an output (species) prediction based on a input test subset
-    print("Base-MLP Penguin Performance\n", classification_report(y_test_penguins, y_pred_baseMLP, zero_division=1)) #evaluating the predicted species subset versus the actual species subset
-    
+    baseMLP.fit(x_train, y_train) #trains the data based on both training subsets of input and output
+    y_pred_baseMLP = baseMLP.predict(x_test) #provides an output (species) prediction based on a input test subset
+    print("Base-MLP Penguin Performance\n", classification_report(y_test, y_pred_baseMLP, zero_division=1)) #evaluating the predicted species subset versus the actual species subset
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_baseMLP)
+    report_performance("penguin" ,"Base-MLP", accuracy, macro_f1, weighted_f1)
     #4d)
     #Instructions on how to conduct search (Mapping)
-    MLPparams = {
+    topMLPparams = {
     'activation': ['logistic', 'tanh', 'relu'], #activation functions
     'hidden_layer_sizes': [(30, 50), (10, 10, 10)], #Network architectures
     'solver': ['adam', 'sgd'] #Solver for weight distribution
     }
     #Use GridSearchCV to perform an exhaustive search using acuracy as the scoring.
-    topMLP = GridSearchCV(MLPClassifier(), MLPparams, scoring='accuracy')
+    topMLP = GridSearchCV(MLPClassifier(), topMLPparams, scoring='accuracy')
     #To train the model
-    topMLP.fit(X_train_penguins, y_train_penguins)
+    topMLP.fit(x_train, y_train)
     print('Top-MLP Best Parameters:', topMLP.best_params_)
-    y_pred_topMLP = topMLP.predict(X_test_penguins)
+    y_pred_topMLP = topMLP.predict(x_test)
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_topMLP)
+    report_performance("penguin" ,"Top-MLP", accuracy, macro_f1, weighted_f1)
     print('Top-MLP Performance for Penguins:')
-    print(classification_report(y_test_penguins, y_pred_topMLP, zero_division=1))
-
-
+    print(classification_report(y_test, y_pred_topMLP, zero_division=1))
 
 def abaloneSteps(abalone):
     #2:
@@ -137,6 +153,8 @@ def abaloneSteps(abalone):
     y_pred_baseDT = baseDT.predict(x_test)
     print('Base-DT Performance for abalone:')
     #Comparing true results with prediction
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_baseDT)
+    report_performance("abalone" ,"Base-DT", accuracy, macro_f1, weighted_f1)
     print(classification_report(y_test, y_pred_baseDT, zero_division=1))
 
 
@@ -163,7 +181,8 @@ def abaloneSteps(abalone):
     topDT = DecisionTreeClassifier(**best_params) #The two stars **unpacks the variable, equivalent to placing it as DecisionTreeClassifier(criterion='entropy', max_depth=10, min_samples_split=5). Though, we don't know the best parameters. 
     topDT.fit(x_train, y_train)
     y_pred_topDT = topDT.predict(x_test)
-
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_topDT)
+    report_performance("abalone" ,"Top-DT", accuracy, macro_f1, weighted_f1)
     print('Top-DT Performance for Penguins:')
     print(classification_report(y_test, y_pred_topDT, zero_division=1))
 
@@ -176,6 +195,8 @@ def abaloneSteps(abalone):
     baseMLP = MLPClassifier(hidden_layer_sizes=(100,100), activation='logistic', solver='sgd')
     baseMLP.fit(x_train, y_train) #trains the data based on both training subsets of input and output
     y_pred_baseMLP = baseMLP.predict(x_test) #provides an output (type) prediction based on a input test subset
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_baseMLP)
+    report_performance("abalone" ,"Base-MLP", accuracy, macro_f1, weighted_f1)
     print("Base-MLP abalone Performance\n", classification_report(y_test, y_pred_baseMLP, zero_division=1)) #evaluating the predicted type subset versus the actual type subset
     
     #4d)
@@ -191,10 +212,12 @@ def abaloneSteps(abalone):
     topMLP.fit(x_train, y_train)
     print('Top-MLP Best Parameters:', topMLP.best_params_)
     y_pred_topMLP = topMLP.predict(x_test)
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_topMLP)
+    report_performance("abalone" ,"Top-MLP", accuracy, macro_f1, weighted_f1)
     print('Top-MLP Performance for Penguins:')
     print(classification_report(y_test, y_pred_topMLP, zero_division=1))
 
-   
+  
 def main():
     script_directory = os.path.dirname(os.path.abspath(__file__))  # Get the directory/filepath of the script
     abalone_file_path = os.path.join(script_directory, "abalone.csv")
