@@ -89,6 +89,9 @@ def baseDT(name:str, x, y):
     print('Base-DT Performance for Penguins:')
     #Comparing true results with prediction
     print(classification_report(y_test, y_pred_baseDT, zero_division=1))
+    plt.figure(figsize=(10,8))
+    plot_tree(baseDT, filled=True)
+    plt.show()
     return accuracy, macro_f1, weighted_f1
 
 def topDT(name:str, x, y):
