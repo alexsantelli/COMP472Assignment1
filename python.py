@@ -116,47 +116,79 @@ def penguinsSteps(penguin_data):
     X_penguins = penguins.drop('species', axis=1)
     y_penguins = penguins['species']
     X_train_penguins, X_test_penguins, y_train_penguins, y_test_penguins = train_test_split(X_penguins, y_penguins)
+
     #4a): Base-DT for Penguins
-    baseDT = DecisionTreeClassifier() #TODO: May need to add random state
+    baseDT = DecisionTreeClassifier()
     baseDT.fit(X_train_penguins, y_train_penguins)
     y_pred_baseDT = baseDT.predict(X_test_penguins)
     print('Base-DT Performance for Penguins:')
     #Comparing true results with prediction
     print(classification_report(y_test_penguins, y_pred_baseDT, zero_division=1))
 
-    #4b): Top-DT for Penguins
-    # Define hyperparameters to search for
-    param_grid = {
-        'criterion': ['gini', 'entropy'], #Using gini or entorpy as mention in the Insturctions for the decisionTree
-        'max_depth': [None, 10, 100],  # 2 different values of our choose including a ”None” option. Values were chosen random.
-        'min_samples_split': [2, 5, 20],  # 3 different values of our choice. Values were chosen random.
+    #4c) Base MLP for Penguins
+    baseMLP = MLPClassifier(hidden_layer_sizes=(100,100), activation='logistic', solver='sgd')
+    baseMLP.fit(X_train_penguins, y_train_penguins) #trains the data based on both training subsets of input and output
+    y_pred_baseMLP = baseMLP.predict(X_test_penguins) #provides an output (species) prediction based on a input test subset
+    print("Base-MLP Penguin Performance\n", classification_report(y_test_penguins, y_pred_baseMLP, zero_division=1)) #evaluating the predicted species subset versus the actual species subset
+    
+    #4d)
+    #Instructions on how to conduct search (Mapping)
+    MLPparams = {
+    'activation': ['logistic', 'tanh', 'relu'], #activation functions
+    'hidden_layer_sizes': [(30, 50), (10, 10, 10)], #Network architectures
+    'solver': ['adam', 'sgd'] #Solver for weight distribution
     }
+    #Use GridSearchCV to perform an exhaustive search using acuracy as the scoring.
+    topMLP = GridSearchCV(MLPClassifier(), MLPparams, scoring='accuracy')
+    #To train the model
+    topMLP.fit(X_train_penguins, y_train_penguins)
+    print('Top-MLP Best Parameters:', topMLP.best_params_)
+    y_pred_topMLP = topMLP.predict(X_test_penguins)
+    print('Top-MLP Performance for Penguins:')
+    print(classification_report(y_test_penguins, y_pred_topMLP, zero_division=1))
 
-    # Create a Decision Tree classifier like in 4a from Scikit-Learn
-    topDT = DecisionTreeClassifier()
 
-    # Finding the hyperparameters using a GridSearchCv function from Scikit-Learns.
-    grid_search = GridSearchCV(topDT, param_grid, cv=5, scoring='accuracy')
-    grid_search.fit(X_train_penguins, y_train_penguins)
 
-    # Getting the best hyperparameters based on our grid_search.
-    best_params = grid_search.best_params_ #the .best_params_ gives the best results on the hold out data
-    print('Best Hyperparameters:', best_params)
 
-    # Train the Top-DT with the best hyperparameters
-    topDT = DecisionTreeClassifier(**best_params) #The two stars **unpacks the variable, equivalent to placing it as DecisionTreeClassifier(criterion='entropy', max_depth=10, min_samples_split=5). Though, we don't know the best parameters. 
-    topDT.fit(X_train_penguins, y_train_penguins)
-    y_pred_topDT = topDT.predict(X_test_penguins)
+def abaloneSteps(abalone):
+    #2:
+    plot_distribution(abalone, "Type", "abalone-classes.png")
+    
+    #3 split data
+    x = abalone.drop('Type', axis=1)
+    y = abalone['Type']
+    x_train, x_test, y_train, y_test = train_test_split(x, y)
+    #4a): Base-DT for abalone
+    baseDT = DecisionTreeClassifier()
+    baseDT.fit(x_train, y_train)
+    y_pred_baseDT = baseDT.predict(x_test)
+    print('Base-DT Performance for abalone:')
+    #Comparing true results with prediction
+    print(classification_report(y_test, y_pred_baseDT, zero_division=1))
 
-    print('Top-DT Performance for Penguins:')
-    print(classification_report(y_test_penguins, y_pred_topDT, zero_division=1))
+    #4c) Base MLP for abalone
+    baseMLP = MLPClassifier(hidden_layer_sizes=(100,100), activation='logistic', solver='sgd')
+    baseMLP.fit(x_train, y_train) #trains the data based on both training subsets of input and output
+    y_pred_baseMLP = baseMLP.predict(x_test) #provides an output (type) prediction based on a input test subset
+    print("Base-MLP abalone Performance\n", classification_report(y_test, y_pred_baseMLP, zero_division=1)) #evaluating the predicted type subset versus the actual type subset
+    
+    #4d)
+    #Instructions on how to conduct search (Mapping)
+    MLPparams = {
+    'activation': ['logistic', 'tanh', 'relu'], #activation functions
+    'hidden_layer_sizes': [(30, 50), (10, 10, 10)], #Network architectures
+    'solver': ['adam', 'sgd'] #Solver for weight distribution
+    }
+    #Use GridSearchCV to perform an exhaustive search using acuracy as the scoring.
+    topMLP = GridSearchCV(MLPClassifier(), MLPparams, scoring='accuracy')
+    #To train the model
+    topMLP.fit(x_train, y_train)
+    print('Top-MLP Best Parameters:', topMLP.best_params_)
+    y_pred_topMLP = topMLP.predict(x_test)
+    print('Top-MLP Performance for Penguins:')
+    print(classification_report(y_test, y_pred_topMLP, zero_division=1))
 
-    #Showing the decision tree graphically (depth is restricted for visualization purposes)
-    plt.figure(figsize=(10, 8)) #10 inches by 8 inches. Reduce the figure size if the monitor/screen is small.
-    plot_tree(topDT, filled=True, feature_names=X_penguins.columns, class_names=y_penguins.unique()) # topDT is the tree model that we are showing, Filled is for color, 
-    plt.show()
-    #plot_distribution(penguins, "species", "penguins-classes-topDT.png")
-
+   
 def main():
     script_directory = os.path.dirname(os.path.abspath(__file__))  # Get the directory/filepath of the script
     abalone_file_path = os.path.join(script_directory, "abalone.csv")
