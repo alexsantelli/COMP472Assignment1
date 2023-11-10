@@ -11,7 +11,7 @@ from sklearn.model_selection import GridSearchCV #https://scikit-learn.org/stabl
 from sklearn.metrics import classification_report, accuracy_score, f1_score, confusion_matrix
 from sklearn.tree import plot_tree #https://scikit-learn.org/stable/modules/generated/sklearn.tree.plot_tree.html#sklearn.tree.plot_tree   This will be used in 4.B
 
-
+RANGE = 5
 def string_to_int(str) -> int:
     try:
         output = int(str)
@@ -20,18 +20,6 @@ def string_to_int(str) -> int:
         return 5
     return output
 
-def plot_instance_class_distribution(data, dataset_name):
-    if dataset_name == 'penguins Dataset':
-        class_counts = data['species'].value_counts() if dataset_name == 'penguins' else data['sex'].value_counts()
-        class_percentage = class_counts / len(data)
-        plt.bar(class_counts.index, class_percentage)
-        plt.xlabel("Class")
-        plt.ylabel("Percentage")
-        plt.title(f"{dataset_name} Class Distribution")
-        #plt.savefig(f"{dataset_name}-classes.gif")
-        plt.show()
-
-# Plot the distribution of the 'species' column
 
 def plot_distribution(type: pd, class_column: str, file_name: str):
     # Calculate the percentage of instances in each class
@@ -42,8 +30,7 @@ def plot_distribution(type: pd, class_column: str, file_name: str):
     plt.title(f'{class_column} Class Distribution')
     
     # Save the plot as a PNG file
-    #plt.savefig(file_name)
-    plt.show()
+    plt.savefig(file_name)
 
 def read_csv(file_path):
     try:
@@ -56,27 +43,56 @@ def read_csv(file_path):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
+def evaluate(y_test, y_pred):
+    accuracy = accuracy_score(y_test, y_pred)
+    macro_f1 = f1_score(y_test, y_pred, average='macro')
+    weighted_f1 = f1_score(y_test, y_pred, average='weighted')
+    return accuracy, macro_f1, weighted_f1
 
-def penguinsSteps(penguin_data):
-    #1: Convert Categorical Features for Penguins into 1 hot vector
-    penguins = pd.get_dummies(penguin_data, columns=['island', 'sex'], drop_first=True) #drop first used to drop the species column
-    
-    #2:
-    plot_distribution(penguins, "species", "penguins-classes.png")
-    
-    #3: split data
-    X_penguins = penguins.drop('species', axis=1)
-    y_penguins = penguins['species']
-    X_train_penguins, X_test_penguins, y_train_penguins, y_test_penguins = train_test_split(X_penguins, y_penguins)
 
-    #4a): Base-DT for Penguins
+def report_performance(dataset_name, model_name, accuracy, macro_f1, weighted_f1):
+    with open(f'{dataset_name}-performance.txt', 'a') as file:
+        file.write(f"{model_name} (D) Accuracy, Macro-Average F1, Weighted-Average F1\n")
+        file.write(f"{model_name} Accuracy: {accuracy}\n")
+        file.write(f"{model_name} Macro F1: {macro_f1}\n")
+        file.write(f"{model_name} Weighted F1: {weighted_f1}\n")
+        
+def confusionMatrix(dataset_name, y_test, y_pred):
+    with open(f'{dataset_name}-performance.txt', 'a') as file:
+        file.write("Confusion Matrix:\n")
+        file.write(f'{confusion_matrix(y_test, y_pred)}\n')
+
+def classificationReport(dataset_name, y_test, y_pred):
+    with open(f'{dataset_name}-performance.txt', 'a') as file:
+        file.write("Classification Report:\n")
+        file.write(f'{classification_report(y_test, y_pred, zero_division=1)}\n')
+
+def appendperformance(dataset_name, model_name: str, metrics: dict[str, list]):
+    avg = np.mean(metrics[model_name])
+    avg_variance = np.var(metrics[model_name])
+    with open(f'{dataset_name}-performance.txt', 'a') as file:
+        file.write(f'{model_name} Average Accuracy: {avg} Variance: {avg_variance}\n')
+    
+
+def baseDT(name:str, x, y):
+    x_train, x_test, y_train, y_test = train_test_split(x, y)
     baseDT = DecisionTreeClassifier()
-    baseDT.fit(X_train_penguins, y_train_penguins)
-    y_pred_baseDT = baseDT.predict(X_test_penguins)
+    baseDT.fit(x_train, y_train)
+    y_pred_baseDT = baseDT.predict(x_test)
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_baseDT)
+    #5B)
+    confusionMatrix(name,y_test, y_pred_baseDT)
+    #5C)
+    classificationReport(name,y_test, y_pred_baseDT)
+    #5D)
+    report_performance(name ,"Base-DT", accuracy, macro_f1, weighted_f1)
     print('Base-DT Performance for Penguins:')
     #Comparing true results with prediction
-    print(classification_report(y_test_penguins, y_pred_baseDT, zero_division=1))
+    print(classification_report(y_test, y_pred_baseDT, zero_division=1))
+    return accuracy, macro_f1, weighted_f1
 
+def topDT(name:str, x, y):
+    x_train, x_test, y_train, y_test = train_test_split(x, y)
     #4b): Top-DT for Penguins
     # Define hyperparameters to search for
     param_grid = {
@@ -84,83 +100,6 @@ def penguinsSteps(penguin_data):
         'max_depth': [None, 10, 100],  # 2 different values of our choose including a ”None” option. Values were chosen random.
         'min_samples_split': [2, 5, 20],  # 3 different values of our choice. Values were chosen random.
     }
-
-    # Create a Decision Tree classifier like in 4a from Scikit-Learn
-    topDT = DecisionTreeClassifier()
-
-    # Finding the hyperparameters using a GridSearchCv function from Scikit-Learns.
-    grid_search = GridSearchCV(topDT, param_grid, cv=5, scoring='accuracy')
-    grid_search.fit(X_train_penguins, y_train_penguins)
-
-    # Getting the best hyperparameters based on our grid_search.
-    best_params = grid_search.best_params_ #the .best_params_ gives the best results on the hold out data
-    print('Best Hyperparameters:', best_params)
-
-    # Train the Top-DT with the best hyperparameters
-    topDT = DecisionTreeClassifier(**best_params) #The two stars **unpacks the variable, equivalent to placing it as DecisionTreeClassifier(criterion='entropy', max_depth=10, min_samples_split=5). Though, we don't know the best parameters. 
-    topDT.fit(X_train_penguins, y_train_penguins)
-    y_pred_topDT = topDT.predict(X_test_penguins)
-
-    print('Top-DT Performance for Penguins:')
-    print(classification_report(y_test_penguins, y_pred_topDT, zero_division=1))
-
-    #Showing the decision tree graphically (depth is restricted for visualization purposes)
-    plt.figure(figsize=(10, 8)) #10 inches by 8 inches. Reduce the figure size if the monitor/screen is small.
-    plot_tree(topDT, filled=True, feature_names=X_penguins.columns, class_names=y_penguins.unique()) # topDT is the tree model that we are showing, Filled is for color, 
-    plt.show()
-    #plot_distribution(penguins, "species", "penguins-classes-topDT.png")
-    
-    #4c) Base MLP for Penguins
-    baseMLP = MLPClassifier(hidden_layer_sizes=(100,100), activation='logistic', solver='sgd')
-    baseMLP.fit(X_train_penguins, y_train_penguins) #trains the data based on both training subsets of input and output
-    y_pred_baseMLP = baseMLP.predict(X_test_penguins) #provides an output (species) prediction based on a input test subset
-    print("Base-MLP Penguin Performance\n", classification_report(y_test_penguins, y_pred_baseMLP, zero_division=1)) #evaluating the predicted species subset versus the actual species subset
-    
-    #4d)
-    #Instructions on how to conduct search (Mapping)
-    MLPparams = {
-    'activation': ['logistic', 'tanh', 'relu'], #activation functions
-    'hidden_layer_sizes': [(30, 50), (10, 10, 10)], #Network architectures
-    'solver': ['adam', 'sgd'] #Solver for weight distribution
-    }
-    #Use GridSearchCV to perform an exhaustive search using acuracy as the scoring.
-    topMLP = GridSearchCV(MLPClassifier(), MLPparams, scoring='accuracy')
-    #To train the model
-    topMLP.fit(X_train_penguins, y_train_penguins)
-    print('Top-MLP Best Parameters:', topMLP.best_params_)
-    y_pred_topMLP = topMLP.predict(X_test_penguins)
-    print('Top-MLP Performance for Penguins:')
-    print(classification_report(y_test_penguins, y_pred_topMLP, zero_division=1))
-
-
-
-
-def abaloneSteps(abalone):
-    #2:
-    plot_distribution(abalone, "Type", "abalone-classes.png")
-    
-    #3 split data
-    x = abalone.drop('Type', axis=1)
-    y = abalone['Type']
-    x_train, x_test, y_train, y_test = train_test_split(x, y)
-
-    #4a): Base-DT for abalone
-    baseDT = DecisionTreeClassifier()
-    baseDT.fit(x_train, y_train)
-    y_pred_baseDT = baseDT.predict(x_test)
-    print('Base-DT Performance for abalone:')
-    #Comparing true results with prediction
-    print(classification_report(y_test, y_pred_baseDT, zero_division=1))
-
-
-    #4b): Top-DT for Abalone
-    # Define hyperparameters to search for
-    param_grid = {
-        'criterion': ['gini', 'entropy'], #Using gini or entorpy as mention in the Insturctions for the decisionTree
-        'max_depth': [None, 2, 10],  # 2 different values of our choose including a ”None” option. Values were chosen random.
-        'min_samples_split': [2, 3, 4],  # 3 different values of our choice. Values were chosen random.
-    }
-
     # Create a Decision Tree classifier like in 4a from Scikit-Learn
     topDT = DecisionTreeClassifier()
 
@@ -176,7 +115,14 @@ def abaloneSteps(abalone):
     topDT = DecisionTreeClassifier(**best_params) #The two stars **unpacks the variable, equivalent to placing it as DecisionTreeClassifier(criterion='entropy', max_depth=10, min_samples_split=5). Though, we don't know the best parameters. 
     topDT.fit(x_train, y_train)
     y_pred_topDT = topDT.predict(x_test)
-
+    
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_topDT)
+    #5B)
+    confusionMatrix(name,y_test, y_pred_topDT)
+    #5C)
+    classificationReport(name,y_test, y_pred_topDT)
+    #5D)
+    report_performance(name ,"Top-DT", accuracy, macro_f1, weighted_f1)
     print('Top-DT Performance for Penguins:')
     print(classification_report(y_test, y_pred_topDT, zero_division=1))
 
@@ -184,30 +130,201 @@ def abaloneSteps(abalone):
     plt.figure(figsize=(10, 8)) #10 inches by 8 inches. Reduce the figure size if the monitor/screen is small.
     plot_tree(topDT, filled=True, feature_names=x.columns, class_names=y.unique()) # topDT is the tree model that we are showing, Filled is for color, 
     plt.show()
-    
-    #4c) Base MLP for abalone
+    #plot_distribution(penguins, "species", "penguins-classes-topDT.png")
+    return accuracy, macro_f1, weighted_f1
+
+def baseMLP(name:str, x, y):
+    x_train, x_test, y_train, y_test = train_test_split(x, y)
     baseMLP = MLPClassifier(hidden_layer_sizes=(100,100), activation='logistic', solver='sgd')
     baseMLP.fit(x_train, y_train) #trains the data based on both training subsets of input and output
-    y_pred_baseMLP = baseMLP.predict(x_test) #provides an output (type) prediction based on a input test subset
-    print("Base-MLP abalone Performance\n", classification_report(y_test, y_pred_baseMLP, zero_division=1)) #evaluating the predicted type subset versus the actual type subset
-    
-    #4d)
+    y_pred_baseMLP = baseMLP.predict(x_test) #provides an output (species) prediction based on a input test subset
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_baseMLP)
+    #5B)
+    confusionMatrix(name,y_test, y_pred_baseMLP)
+    #5C)
+    classificationReport(name,y_test, y_pred_baseMLP)
+    #5D)
+    report_performance(name ,"Base-MLP", accuracy, macro_f1, weighted_f1)
+    print('Base-MLP Performance for Penguins:')
+    #Comparing true results with prediction
+    print(classification_report(y_test, y_pred_baseMLP, zero_division=1))
+    return accuracy, macro_f1, weighted_f1
+
+def topMLP(name:str, x, y):
+    x_train, x_test, y_train, y_test = train_test_split(x, y)
     #Instructions on how to conduct search (Mapping)
-    MLPparams = {
+    topMLPparams = {
     'activation': ['logistic', 'tanh', 'relu'], #activation functions
     'hidden_layer_sizes': [(30, 50), (10, 10, 10)], #Network architectures
     'solver': ['adam', 'sgd'] #Solver for weight distribution
     }
     #Use GridSearchCV to perform an exhaustive search using acuracy as the scoring.
-    topMLP = GridSearchCV(MLPClassifier(), MLPparams, scoring='accuracy')
+    topMLP = GridSearchCV(MLPClassifier(), topMLPparams, scoring='accuracy')
     #To train the model
     topMLP.fit(x_train, y_train)
     print('Top-MLP Best Parameters:', topMLP.best_params_)
     y_pred_topMLP = topMLP.predict(x_test)
+    accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_topMLP)
+    #5B)
+    confusionMatrix(name,y_test, y_pred_topMLP)
+    #5C)
+    classificationReport(name,y_test, y_pred_topMLP)
+    #5D)
+    report_performance(name ,"Top-MLP", accuracy, macro_f1, weighted_f1)
     print('Top-MLP Performance for Penguins:')
     print(classification_report(y_test, y_pred_topMLP, zero_division=1))
+    return accuracy, macro_f1, weighted_f1
+        
+def penguinsSteps(penguin_data):
+    
+    #1: Convert Categorical Features for Penguins into 1 hot vector
+    penguins = pd.get_dummies(penguin_data, columns=['island', 'sex'], drop_first=True) #drop first used to drop the species column
+    
+    #2:
+    plot_distribution(penguins, "species", "penguins-classes.png")
+    
+    #3: split data
+    x = penguins.drop('species', axis=1)
+    y = penguins['species']
+    with open('penguins-performance.txt', 'w') as file:
+        file.write("Base-DT Evaluation Results\n")
+    accuracy_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
+    macro_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
+    weighted_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
+    
+    #4a) Base-DT for Penguins
+    for i in range(RANGE):
+        #5A)
+        with open(f'penguins-performance.txt', 'a') as file:
+            file.write("--------------------------------------------------\n")
+            file.write(f"Base-DT Model -- Iteration {i}\n")
+        accuracy, macro_f1, weighted_f1 = baseDT("penguins", x, y)
+        accuracy_metrics['Base-DT'].append(accuracy)
+        macro_metrics['Base-DT'].append(macro_f1)
+        weighted_metrics['Base-DT'].append(weighted_f1)
+    #6 Appended Averages
+    appendperformance("penguins","Base-DT", accuracy_metrics)
+    appendperformance("penguins","Base-DT", macro_metrics)
+    appendperformance("penguins","Base-DT", weighted_metrics)
+    
+    #4b) Top-DT for Penguins
+    for i in range(RANGE):
+        #5A)
+        with open(f'penguins-performance.txt', 'a') as file:
+            file.write("--------------------------------------------------\n")
+            file.write(f"Top-DT Model -- Iteration {i}\n")
+        accuracy, macro_f1, weighted_f1 = topDT("penguins", x, y)
+        accuracy_metrics['Top-DT'].append(accuracy)
+        macro_metrics['Top-DT'].append(macro_f1)
+        weighted_metrics['Top-DT'].append(weighted_f1)
+    #6 Appended Averages
+    appendperformance("penguins","Top-DT", accuracy_metrics)
+    appendperformance("penguins","Top-DT", macro_metrics)
+    appendperformance("penguins","Top-DT", weighted_metrics)
+    
+    #4c) Base MLP for Penguins    
+    for i in range(RANGE):
+        #5A)
+        with open(f'penguins-performance.txt', 'a') as file:
+            file.write("--------------------------------------------------\n")
+            file.write(f"Base-MLP Model -- Iteration {i}\n")
+        accuracy, macro_f1, weighted_f1 = baseMLP("penguins", x, y)
+        accuracy_metrics['Base-MLP'].append(accuracy)
+        macro_metrics['Base-MLP'].append(macro_f1)
+        weighted_metrics['Base-MLP'].append(weighted_f1)
+    #6 Appended Averages
+    appendperformance("penguins","Base-MLP", accuracy_metrics)
+    appendperformance("penguins","Base-MLP", macro_metrics)
+    appendperformance("penguins","Base-MLP", weighted_metrics)
+    
+    #4d) Top MLP for Penguins
+    for i in range(RANGE):
+        #5A)
+        with open(f'penguins-performance.txt', 'a') as file:
+            file.write("--------------------------------------------------\n")
+            file.write(f"Top-MLP Model -- Iteration {i}\n")
+        accuracy, macro_f1, weighted_f1 = topMLP("penguins", x, y)
+        accuracy_metrics['Top-MLP'].append(accuracy)
+        macro_metrics['Top-MLP'].append(macro_f1)
+        weighted_metrics['Top-MLP'].append(weighted_f1)
+    #6 Appended Averages
+    appendperformance("penguins","Top-MLP", accuracy_metrics)
+    appendperformance("penguins","Top-MLP", macro_metrics)
+    appendperformance("penguins","Top-MLP", weighted_metrics)
+    
 
-   
+def abaloneSteps(abalone):
+    #2:
+    plot_distribution(abalone, "Type", "abalone-classes.png")
+    
+    #3 split data
+    x = abalone.drop('Type', axis=1)
+    y = abalone['Type']
+    accuracy_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
+    macro_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
+    weighted_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
+    
+    #4a) Base-DT for Abalone
+    for i in range(RANGE):
+        #5A)
+        with open(f'abalone-performance.txt', 'a') as file:
+            file.write("--------------------------------------------------\n")
+            file.write(f"Base-DT Model -- Iteration {i}\n")
+        accuracy, macro_f1, weighted_f1 = baseDT("abalone", x, y)
+        accuracy_metrics['Base-DT'].append(accuracy)
+        macro_metrics['Base-DT'].append(macro_f1)
+        weighted_metrics['Base-DT'].append(weighted_f1)
+    #6 Appended Averages
+    appendperformance("abalone","Base-DT", accuracy_metrics)
+    appendperformance("abalone","Base-DT", macro_metrics)
+    appendperformance("abalone","Base-DT", weighted_metrics)
+    
+    #4b) Top-DT for Abalone
+    for i in range(RANGE):
+        #5A)
+        with open(f'abalone-performance.txt', 'a') as file:
+            file.write("--------------------------------------------------\n")
+            file.write(f"Top-DT Model -- Iteration {i}\n")
+        accuracy, macro_f1, weighted_f1 = topDT("abalone", x, y)
+        accuracy_metrics['Top-DT'].append(accuracy)
+        macro_metrics['Top-DT'].append(macro_f1)
+        weighted_metrics['Top-DT'].append(weighted_f1)
+    #6 Appended Averages
+    appendperformance("abalone","Top-DT", accuracy_metrics)
+    appendperformance("abalone","Top-DT", macro_metrics)
+    appendperformance("abalone","Top-DT", weighted_metrics)
+    
+    #4c) Base MLP for Abalone    
+    for i in range(RANGE):
+        #5A)
+        with open(f'abalone-performance.txt', 'a') as file:
+            file.write("--------------------------------------------------\n")
+            file.write(f"Base-MLP Model -- Iteration {i}\n")
+        accuracy, macro_f1, weighted_f1 = baseMLP("abalone", x, y)
+        accuracy_metrics['Base-MLP'].append(accuracy)
+        macro_metrics['Base-MLP'].append(macro_f1)
+        weighted_metrics['Base-MLP'].append(weighted_f1)
+    #6 Appended Averages
+    appendperformance("abalone","Base-MLP", accuracy_metrics)
+    appendperformance("abalone","Base-MLP", macro_metrics)
+    appendperformance("abalone","Base-MLP", weighted_metrics)
+    
+    #4d) Top MLP for Abalone
+    for i in range(RANGE):
+        #5A)
+        with open(f'abalone-performance.txt', 'a') as file:
+            file.write("--------------------------------------------------\n")
+            file.write(f"Top-MLP Model -- Iteration {i}\n")
+        accuracy, macro_f1, weighted_f1 = topMLP("abalone", x, y)
+        accuracy_metrics['Top-MLP'].append(accuracy)
+        macro_metrics['Top-MLP'].append(macro_f1)
+        weighted_metrics['Top-MLP'].append(weighted_f1)
+    #6 Appended Averages
+    appendperformance("abalone","Top-MLP", accuracy_metrics)
+    appendperformance("abalone","Top-MLP", macro_metrics)
+    appendperformance("abalone","Top-MLP", weighted_metrics)
+
+  
 def main():
     script_directory = os.path.dirname(os.path.abspath(__file__))  # Get the directory/filepath of the script
     abalone_file_path = os.path.join(script_directory, "abalone.csv")
@@ -215,32 +332,18 @@ def main():
     penguin_data = pd.read_csv(penguins_file_path)
     abalone_data = pd.read_csv(abalone_file_path)
     
-
-    
     while(True):
-        user_input = input("Please select one of the options below to check a file.\n(1) abalone.csv\n(2) penguins.csv\n(3) custome file (File path is required)\n")
+        user_input = input("Please select one of the options below to check a file.\n(1) abalone.csv\n(2) penguins.csv\n")
         user_choice = string_to_int(user_input)
         if user_input and user_choice <= 3:
             if user_choice == 1:
                 print("abalone.csv has been selected")
-                plot_instance_class_distribution(abalone_data, 'Abalone Dataset')
                 abaloneSteps(abalone_data)
-                #read_csv(abalone_data) -- old
                 break
             elif user_choice == 2:
                 print("penguins.csv has been selected")
-                plot_instance_class_distribution(penguin_data, 'Penguins Dataset')
                 penguinsSteps(penguin_data)
-                #read_csv(penguins_file_path)  -- old
-                break
-            elif user_choice == 3:
-                while(True):
-                    user_input_custom = input("Custom file has been selects\nPlease enter the file path and name that you want to review")
-                    if user_input_custom: 
-                        #read_csv(user_input)  -- old
-                        break
-                    else:
-                        print("[Error]: User input is empty. Please enter a valid file.")    
+                break  
             else:
                 print("[Error]: Invalide option has been selected.")
         else:
