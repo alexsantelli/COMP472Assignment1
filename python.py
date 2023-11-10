@@ -19,18 +19,6 @@ def string_to_int(str) -> int:
         return 5
     return output
 
-def plot_instance_class_distribution(data, dataset_name):
-    if dataset_name == 'penguins Dataset':
-        class_counts = data['species'].value_counts() if dataset_name == 'penguins' else data['sex'].value_counts()
-        class_percentage = class_counts / len(data)
-        plt.bar(class_counts.index, class_percentage)
-        plt.xlabel("Class")
-        plt.ylabel("Percentage")
-        plt.title(f"{dataset_name} Class Distribution")
-        #plt.savefig(f"{dataset_name}-classes.gif")
-        plt.show()
-
-# Plot the distribution of the 'species' column
 
 def plot_distribution(type: pd, class_column: str, file_name: str):
     # Calculate the percentage of instances in each class
@@ -55,9 +43,6 @@ def read_csv(file_path):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
-def abaloneSteps(abalone):
-    #2:
-    plot_distribution(abalone, "Type", "abalone-classes.png")
 
 def penguinsSteps(penguin_data):
     #1: Convert Categorical Features for Penguins into 1 hot vector
@@ -100,7 +85,6 @@ def penguinsSteps(penguin_data):
     y_pred_topMLP = topMLP.predict(X_test_penguins)
     print('Top-MLP Performance for Penguins:')
     print(classification_report(y_test_penguins, y_pred_topMLP, zero_division=1))
-
 
 
 
@@ -150,32 +134,20 @@ def main():
     penguin_data = pd.read_csv(penguins_file_path)
     abalone_data = pd.read_csv(abalone_file_path)
     
-
-    
     while(True):
-        user_input = input("Please select one of the options below to check a file.\n(1) abalone.csv\n(2) penguins.csv\n(3) custome file (File path is required)\n")
+        user_input = input("Please select one of the options below to check a file.\n(1) abalone.csv\n(2) penguins.csv\n")
         user_choice = string_to_int(user_input)
         if user_input and user_choice <= 3:
             if user_choice == 1:
                 print("abalone.csv has been selected")
-                plot_instance_class_distribution(abalone_data, 'Abalone Dataset')
                 abaloneSteps(abalone_data)
                 #read_csv(abalone_data) -- old
                 break
             elif user_choice == 2:
                 print("penguins.csv has been selected")
-                plot_instance_class_distribution(penguin_data, 'Penguins Dataset')
                 penguinsSteps(penguin_data)
                 #read_csv(penguins_file_path)  -- old
-                break
-            elif user_choice == 3:
-                while(True):
-                    user_input_custom = input("Custom file has been selects\nPlease enter the file path and name that you want to review")
-                    if user_input_custom: 
-                        #read_csv(user_input)  -- old
-                        break
-                    else:
-                        print("[Error]: User input is empty. Please enter a valid file.")    
+                break  
             else:
                 print("[Error]: Invalide option has been selected.")
         else:
