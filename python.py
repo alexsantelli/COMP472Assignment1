@@ -9,9 +9,12 @@ from sklearn.tree import DecisionTreeClassifier #https://scikit-learn.org/stable
 from sklearn.neural_network import MLPClassifier #https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html#sklearn.neural_network.MLPClassifier
 from sklearn.model_selection import GridSearchCV #https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
 from sklearn.metrics import classification_report, accuracy_score, f1_score, confusion_matrix
-from sklearn.tree import plot_tree #https://scikit-learn.org/stable/modules/generated/sklearn.tree.plot_tree.html#sklearn.tree.plot_tree   This will be used in 4.B
+from sklearn.tree import plot_tree #https://scikit-learn.org/stable/modules/generated/sklearn.tree.plot_tree.html#sklearn.tree.plot_tree   This will be used in 4.A and 4.B8
 
 RANGE = 5
+baseDT_figure_counter = 0
+topDT_figure_counter = 0
+
 def string_to_int(str) -> int:
     try:
         output = int(str)
@@ -76,7 +79,8 @@ def appendperformance(dataset_name, model_name: str, metrics: dict[str, list]):
         file.write('--------------------------------------------------------------\n')
         file.write(f'{model_name} Average Accuracy: {avg} Variance: {avg_variance}\n')
     
-def baseDT(name:str, x, y):
+def baseDT(name:str, x, y, user_choice_maxDepth):
+    global baseDT_figure_counter  #Global baseDT counter variable to know which figure of the recursion it's at.
     x_train, x_test, y_train, y_test = train_test_split(x, y)
     baseDT = DecisionTreeClassifier()
     baseDT.fit(x_train, y_train)
@@ -88,12 +92,14 @@ def baseDT(name:str, x, y):
     classificationReport(name,y_test, y_pred_baseDT)
     #5D)
     report_performance(name ,"Base-DT", accuracy, macro_f1, weighted_f1)
-    plt.figure(figsize=(10,8))
-    plot_tree(baseDT, filled=True)
+    baseDT_figure_counter += 1  # Increments the counter for each figure of the recursion
+    plt.figure(figsize=(10,8), num=f'{name} Decision Tree BaseDT - Figure {baseDT_figure_counter}')
+    plot_tree(baseDT, filled=True, max_depth=user_choice_maxDepth)
     plt.show()
     return accuracy, macro_f1, weighted_f1
 
-def topDT(name:str, x, y):
+def topDT(name:str, x, y, user_choice_maxDepth):
+    global topDT_figure_counter  #Global topDT counter variable to know which figure of the recursion it's at.
     x_train, x_test, y_train, y_test = train_test_split(x, y)
     #4b): Top-DT for Penguins
     # Define hyperparameters to search for
@@ -126,9 +132,11 @@ def topDT(name:str, x, y):
     classificationReport(name,y_test, y_pred_topDT)
     #5D)
     report_performance(name ,"Top-DT", accuracy, macro_f1, weighted_f1)
+
+    topDT_figure_counter += 1  # Increments the counter for each figure of the recursion
     #Showing the decision tree graphically (depth is restricted for visualization purposes)
-    plt.figure(figsize=(10, 8)) #10 inches by 8 inches. Reduce the figure size if the monitor/screen is small.
-    plot_tree(topDT, filled=True, feature_names=x.columns, class_names=y.unique().astype(str)) # topDT is the tree model that we are showing, Filled is for color, 
+    plt.figure(figsize=(10, 8), num=f'{name} Decision Tree TopDT - Figure {topDT_figure_counter}') #10 inches by 8 inches. Reduce the figure size if the monitor/screen is small.
+    plot_tree(topDT, filled=True, feature_names=x.columns, class_names=y.unique().astype(str), max_depth=user_choice_maxDepth) # topDT is the tree model that we are showing, Filled is for color.
     plt.show()
     return accuracy, macro_f1, weighted_f1
 
@@ -174,7 +182,7 @@ def topMLP(name:str, x, y):
     report_performance(name ,"Top-MLP", accuracy, macro_f1, weighted_f1)
     return accuracy, macro_f1, weighted_f1
         
-def penguinsSteps(penguin_data, user_choice):
+def penguinsSteps(penguin_data, user_choice, user_choice_maxDepth):
 
     if user_choice == 1:
         #1: Convert Categorical Features for Penguins into 1 hot vector
@@ -206,7 +214,7 @@ def penguinsSteps(penguin_data, user_choice):
         with open(f'penguins-performance.txt', 'a') as file:
             file.write("--------------------------------------------------\n")
             file.write(f"Base-DT Model -- Iteration {i}\n")
-        accuracy, macro_f1, weighted_f1 = baseDT("penguins", x, y)
+        accuracy, macro_f1, weighted_f1 = baseDT("penguins", x, y, user_choice_maxDepth)
         accuracy_metrics['Base-DT'].append(accuracy)
         macro_metrics['Base-DT'].append(macro_f1)
         weighted_metrics['Base-DT'].append(weighted_f1)
@@ -221,7 +229,7 @@ def penguinsSteps(penguin_data, user_choice):
         with open(f'penguins-performance.txt', 'a') as file:
             file.write("--------------------------------------------------\n")
             file.write(f"Top-DT Model -- Iteration {i}\n")
-        accuracy, macro_f1, weighted_f1 = topDT("penguins", x, y)
+        accuracy, macro_f1, weighted_f1 = topDT("penguins", x, y, user_choice_maxDepth)
         accuracy_metrics['Top-DT'].append(accuracy)
         macro_metrics['Top-DT'].append(macro_f1)
         weighted_metrics['Top-DT'].append(weighted_f1)
@@ -261,7 +269,7 @@ def penguinsSteps(penguin_data, user_choice):
     appendperformance("penguins","Top-MLP", weighted_metrics)
     
 
-def abaloneSteps(abalone):
+def abaloneSteps(abalone, user_choice_maxDepth):
     #2:
     plot_distribution(abalone, "Type", "abalone-classes.png")
     
@@ -282,7 +290,7 @@ def abaloneSteps(abalone):
         with open(f'abalone-performance.txt', 'a') as file:
             file.write("--------------------------------------------------\n")
             file.write(f"Base-DT Model -- Iteration {i}\n")
-        accuracy, macro_f1, weighted_f1 = baseDT("abalone", x, y)
+        accuracy, macro_f1, weighted_f1 = baseDT("abalone", x, y, user_choice_maxDepth)
         accuracy_metrics['Base-DT'].append(accuracy)
         macro_metrics['Base-DT'].append(macro_f1)
         weighted_metrics['Base-DT'].append(weighted_f1)
@@ -297,7 +305,7 @@ def abaloneSteps(abalone):
         with open(f'abalone-performance.txt', 'a') as file:
             file.write("--------------------------------------------------\n")
             file.write(f"Top-DT Model -- Iteration {i}\n")
-        accuracy, macro_f1, weighted_f1 = topDT("abalone", x, y)
+        accuracy, macro_f1, weighted_f1 = topDT("abalone", x, y, user_choice_maxDepth)
         accuracy_metrics['Top-DT'].append(accuracy)
         macro_metrics['Top-DT'].append(macro_f1)
         weighted_metrics['Top-DT'].append(weighted_f1)
@@ -348,19 +356,25 @@ def main():
         user_choice = string_to_int(input("Please select one of the options below to check a file.\n(1) abalone.csv\n(2) penguins.csv\n"))
         if user_choice == 1:
             print("abalone.csv has been selected")
-            abaloneSteps(abalone_data)
-            break
+            user_choice_maxDepth = string_to_int(input("For visualisation purpose only, please enter a max depth restriction for the tree depth. (This will not affect the actual data)\n"))
+            if user_choice_maxDepth:
+                abaloneSteps(abalone_data, user_choice_maxDepth)
+                break
         elif user_choice == 2:
             print("penguins.csv has been selected")
             user_choice2 = string_to_int(input("Select which way the Penguins database will converted:\n(1) 1-hot vector \n(2) categorize manually\n"))
             if user_choice2 == 1:
                 print("1-hot vector will be used")
-                penguinsSteps(penguin_data, user_choice2)
-                break
+                user_choice_maxDepth = string_to_int(input("For visualisation purpose only, please enter a max depth restriction for the tree depth. (This will not affect the actual data)\n"))
+                if user_choice_maxDepth:
+                    penguinsSteps(penguin_data, user_choice2, user_choice_maxDepth)
+                    break
             elif user_choice2 == 2:
                 print("Manual conversion will be used")
-                penguinsSteps(penguin_data, user_choice2)
-                break
+                user_choice_maxDepth = string_to_int(input("For visualisation purpose only, please enter a max depth restriction for the tree depth. (This will not affect the actual data)\n"))
+                if user_choice_maxDepth:
+                    penguinsSteps(penguin_data, user_choice2, user_choice_maxDepth)
+                    break
             else:
                 print("[Error]: Invalide option has been selected.")
         else:
