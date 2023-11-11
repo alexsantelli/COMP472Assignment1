@@ -60,10 +60,12 @@ def report_performance(dataset_name, model_name, accuracy, macro_f1, weighted_f1
 def confusionMatrix(dataset_name, y_test, y_pred):
     with open(f'{dataset_name}-performance.txt', 'a') as file:
         file.write("Confusion Matrix:\n")
+        #summarizes the number of correct and incorrect predictions made by the model on a dataset: True Positives, False Positives, True Negatives, False Negatives
         file.write(f'{confusion_matrix(y_test, y_pred)}\n')
 
 def classificationReport(dataset_name, y_test, y_pred):
     with open(f'{dataset_name}-performance.txt', 'a') as file:
+        #Comparing true results with prediction
         file.write("Classification Report:\n")
         file.write(f'{classification_report(y_test, y_pred, zero_division=1)}\n')
 
@@ -73,7 +75,6 @@ def appendperformance(dataset_name, model_name: str, metrics: dict[str, list]):
     with open(f'{dataset_name}-performance.txt', 'a') as file:
         file.write(f'{model_name} Average Accuracy: {avg} Variance: {avg_variance}\n')
     
-
 def baseDT(name:str, x, y):
     x_train, x_test, y_train, y_test = train_test_split(x, y)
     baseDT = DecisionTreeClassifier()
@@ -86,9 +87,6 @@ def baseDT(name:str, x, y):
     classificationReport(name,y_test, y_pred_baseDT)
     #5D)
     report_performance(name ,"Base-DT", accuracy, macro_f1, weighted_f1)
-    print('Base-DT Performance for Penguins:')
-    #Comparing true results with prediction
-    print(classification_report(y_test, y_pred_baseDT, zero_division=1))
     plt.figure(figsize=(10,8))
     plot_tree(baseDT, filled=True)
     plt.show()
@@ -126,9 +124,6 @@ def topDT(name:str, x, y):
     classificationReport(name,y_test, y_pred_topDT)
     #5D)
     report_performance(name ,"Top-DT", accuracy, macro_f1, weighted_f1)
-    print('Top-DT Performance for Penguins:')
-    print(classification_report(y_test, y_pred_topDT, zero_division=1))
-
     #Showing the decision tree graphically (depth is restricted for visualization purposes)
     plt.figure(figsize=(10, 8)) #10 inches by 8 inches. Reduce the figure size if the monitor/screen is small.
     plot_tree(topDT, filled=True, feature_names=x.columns, class_names=y.unique().astype(str)) # topDT is the tree model that we are showing, Filled is for color, 
@@ -147,9 +142,6 @@ def baseMLP(name:str, x, y):
     classificationReport(name,y_test, y_pred_baseMLP)
     #5D)
     report_performance(name ,"Base-MLP", accuracy, macro_f1, weighted_f1)
-    print('Base-MLP Performance for Penguins:')
-    #Comparing true results with prediction
-    print(classification_report(y_test, y_pred_baseMLP, zero_division=1))
     return accuracy, macro_f1, weighted_f1
 
 def topMLP(name:str, x, y):
@@ -173,8 +165,6 @@ def topMLP(name:str, x, y):
     classificationReport(name,y_test, y_pred_topMLP)
     #5D)
     report_performance(name ,"Top-MLP", accuracy, macro_f1, weighted_f1)
-    print('Top-MLP Performance for Penguins:')
-    print(classification_report(y_test, y_pred_topMLP, zero_division=1))
     return accuracy, macro_f1, weighted_f1
         
 def penguinsSteps(penguin_data, user_choice):
@@ -197,6 +187,8 @@ def penguinsSteps(penguin_data, user_choice):
     y = penguins['species']
     with open('penguins-performance.txt', 'w') as file:
         file.write("Base-DT Evaluation Results\n")
+        
+    #Store the results of the 5 iterations of each model in a dictionary
     accuracy_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
     macro_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
     weighted_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
