@@ -59,20 +59,21 @@ def report_performance(dataset_name, model_name, accuracy, macro_f1, weighted_f1
         
 def confusionMatrix(dataset_name, y_test, y_pred):
     with open(f'{dataset_name}-performance.txt', 'a') as file:
-        file.write("Confusion Matrix:\n")
+        file.write("(B) Confusion Matrix:\n")
         #summarizes the number of correct and incorrect predictions made by the model on a dataset: True Positives, False Positives, True Negatives, False Negatives
         file.write(f'{confusion_matrix(y_test, y_pred)}\n')
 
 def classificationReport(dataset_name, y_test, y_pred):
     with open(f'{dataset_name}-performance.txt', 'a') as file:
         #Comparing true results with prediction
-        file.write("Classification Report:\n")
+        file.write("(C) Classification Report:\n")
         file.write(f'{classification_report(y_test, y_pred, zero_division=1)}\n')
 
 def appendperformance(dataset_name, model_name: str, metrics: dict[str, list]):
     avg = np.mean(metrics[model_name])
     avg_variance = np.var(metrics[model_name])
     with open(f'{dataset_name}-performance.txt', 'a') as file:
+        file.write('--------------------------------------------------------------\n')
         file.write(f'{model_name} Average Accuracy: {avg} Variance: {avg_variance}\n')
     
 def baseDT(name:str, x, y):
@@ -110,7 +111,8 @@ def topDT(name:str, x, y):
 
     # Getting the best hyperparameters based on our grid_search.
     best_params = grid_search.best_params_ #the .best_params_ gives the best results on the hold out data
-    print('Best Hyperparameters:', best_params)
+    with open(f'{name}-performance.txt', 'a') as file:
+        file.write(f'Top-DT Best Hyperparameters: {best_params}\n')
 
     # Train the Top-DT with the best hyperparameters
     topDT = DecisionTreeClassifier(**best_params) #The two stars **unpacks the variable, equivalent to placing it as DecisionTreeClassifier(criterion='entropy', max_depth=10, min_samples_split=5). Though, we don't know the best parameters. 
@@ -153,10 +155,15 @@ def topMLP(name:str, x, y):
     'solver': ['adam', 'sgd'] #Solver for weight distribution
     }
     #Use GridSearchCV to perform an exhaustive search using acuracy as the scoring.
-    topMLP = GridSearchCV(MLPClassifier(max_iter=1000), topMLPparams, scoring='accuracy') #setting max_iter for convergence warnings
+    topMLP = GridSearchCV(MLPClassifier(max_iter=1000), topMLPparams, cv=5, scoring='accuracy') #setting max_iter for convergence warnings
     #To train the model
     topMLP.fit(x_train, y_train)
-    print('Top-MLP Best Parameters:', topMLP.best_params_)
+    best_params = topMLP.best_params_
+    with open(f'{name}-performance.txt', 'a') as file:
+        file.write(f'Top-MLP Best Hyperparameters: {best_params}\n')
+    # Train the Top-MLP with the best hyperparameters
+    topMLP = MLPClassifier(max_iter=1000, **best_params)
+    topMLP.fit(x_train, y_train)
     y_pred_topMLP = topMLP.predict(x_test)
     accuracy, macro_f1, weighted_f1 = evaluate(y_test, y_pred_topMLP)
     #5B)
@@ -186,7 +193,7 @@ def penguinsSteps(penguin_data, user_choice):
     x = penguins.drop('species', axis=1)
     y = penguins['species']
     with open('penguins-performance.txt', 'w') as file:
-        file.write("Base-DT Evaluation Results\n")
+        file.write("(A) Base-DT Evaluation Results\n")
         
     #Store the results of the 5 iterations of each model in a dictionary
     accuracy_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
@@ -261,6 +268,10 @@ def abaloneSteps(abalone):
     #3 split data
     x = abalone.drop('Type', axis=1)
     y = abalone['Type']
+    
+    with open('abalone-performance.txt', 'w') as file:
+        file.write("(A) Base-DT Evaluation Results\n")
+    
     accuracy_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
     macro_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
     weighted_metrics = {'Base-DT': [], 'Top-DT': [], 'Base-MLP': [], 'Top-MLP': []}
