@@ -14,6 +14,7 @@ from sklearn.tree import plot_tree #https://scikit-learn.org/stable/modules/gene
 RANGE = 5
 baseDT_figure_counter = 0
 topDT_figure_counter = 0
+user_choice_maxDepth = 1
 
 def string_to_int(str) -> int:
     try:
@@ -356,25 +357,19 @@ def main():
         user_choice = string_to_int(input("Please select one of the options below to check a file.\n(1) abalone.csv\n(2) penguins.csv\n"))
         if user_choice == 1:
             print("abalone.csv has been selected")
-            user_choice_maxDepth = string_to_int(input("For visualisation purpose only, please enter a max depth restriction for the tree depth. (This will not affect the actual data)\n"))
-            if user_choice_maxDepth:
-                abaloneSteps(abalone_data, user_choice_maxDepth)
-                break
+            abaloneSteps(abalone_data, user_choice_maxDepth)
+            break
         elif user_choice == 2:
             print("penguins.csv has been selected")
             user_choice2 = string_to_int(input("Select which way the Penguins database will converted:\n(1) 1-hot vector \n(2) categorize manually\n"))
             if user_choice2 == 1:
                 print("1-hot vector will be used")
-                user_choice_maxDepth = string_to_int(input("For visualisation purpose only, please enter a max depth restriction for the tree depth. (This will not affect the actual data)\n"))
-                if user_choice_maxDepth:
-                    penguinsSteps(penguin_data, user_choice2, user_choice_maxDepth)
-                    break
+                penguinsSteps(penguin_data, user_choice2, user_choice_maxDepth)
+                break
             elif user_choice2 == 2:
                 print("Manual conversion will be used")
-                user_choice_maxDepth = string_to_int(input("For visualisation purpose only, please enter a max depth restriction for the tree depth. (This will not affect the actual data)\n"))
-                if user_choice_maxDepth:
-                    penguinsSteps(penguin_data, user_choice2, user_choice_maxDepth)
-                    break
+                penguinsSteps(penguin_data, user_choice2, user_choice_maxDepth)
+                break
             else:
                 print("[Error]: Invalide option has been selected.")
         else:
