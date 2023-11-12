@@ -14,7 +14,7 @@ from sklearn.tree import plot_tree #https://scikit-learn.org/stable/modules/gene
 RANGE = 5
 baseDT_figure_counter = 0
 topDT_figure_counter = 0
-user_choice_maxDepth = 2
+user_choice_maxDepth = 1
 
 def string_to_int(str) -> int:
     try:
