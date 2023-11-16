@@ -73,12 +73,12 @@ def classificationReport(dataset_name, y_test, y_pred):
         file.write("(C) Classification Report:\n")
         file.write(f'{classification_report(y_test, y_pred, zero_division=1)}\n')
 
-def appendperformance(dataset_name, model_name: str, metrics: dict[str, list]):
+def appendperformance(dataset_name, model_name: str, measuring_type: str, metrics: dict[str, list]):
     avg = np.mean(metrics[model_name])
     avg_variance = np.var(metrics[model_name])
     with open(f'{dataset_name}-performance.txt', 'a') as file:
         file.write('--------------------------------------------------------------\n')
-        file.write(f'{model_name} Average Accuracy: {avg} Variance: {avg_variance}\n')
+        file.write(f'{model_name} Average {measuring_type}: {avg} Variance: {avg_variance}\n')
     
 def baseDT(name:str, x, y, user_choice_maxDepth):
     global baseDT_figure_counter  #Global baseDT counter variable to know which figure of the recursion it's at.
@@ -220,9 +220,9 @@ def penguinsSteps(penguin_data, user_choice, user_choice_maxDepth):
         macro_metrics['Base-DT'].append(macro_f1)
         weighted_metrics['Base-DT'].append(weighted_f1)
     #6 Appended Averages
-    appendperformance("penguins","Base-DT", accuracy_metrics)
-    appendperformance("penguins","Base-DT", macro_metrics)
-    appendperformance("penguins","Base-DT", weighted_metrics)
+    appendperformance("penguins","Base-DT", "Accuracy", accuracy_metrics)
+    appendperformance("penguins","Base-DT", "Macro F1", macro_metrics)
+    appendperformance("penguins","Base-DT", "Weighted F1", weighted_metrics)
     
     #4b) Top-DT for Penguins
     for i in range(RANGE):
@@ -235,9 +235,9 @@ def penguinsSteps(penguin_data, user_choice, user_choice_maxDepth):
         macro_metrics['Top-DT'].append(macro_f1)
         weighted_metrics['Top-DT'].append(weighted_f1)
     #6 Appended Averages
-    appendperformance("penguins","Top-DT", accuracy_metrics)
-    appendperformance("penguins","Top-DT", macro_metrics)
-    appendperformance("penguins","Top-DT", weighted_metrics)
+    appendperformance("penguins","Top-DT", "Accuracy", accuracy_metrics)
+    appendperformance("penguins","Top-DT", "Macro F1", macro_metrics)
+    appendperformance("penguins","Top-DT", "Weighted F1", weighted_metrics)    
     
     #4c) Base MLP for Penguins    
     for i in range(RANGE):
@@ -250,9 +250,9 @@ def penguinsSteps(penguin_data, user_choice, user_choice_maxDepth):
         macro_metrics['Base-MLP'].append(macro_f1)
         weighted_metrics['Base-MLP'].append(weighted_f1)
     #6 Appended Averages
-    appendperformance("penguins","Base-MLP", accuracy_metrics)
-    appendperformance("penguins","Base-MLP", macro_metrics)
-    appendperformance("penguins","Base-MLP", weighted_metrics)
+    appendperformance("penguins","Base-MLP", "Accuracy", accuracy_metrics)
+    appendperformance("penguins","Base-MLP", "Macro F1", macro_metrics)
+    appendperformance("penguins","Base-MLP", "Weighted F1", weighted_metrics)
     
     #4d) Top MLP for Penguins
     for i in range(RANGE):
@@ -265,9 +265,9 @@ def penguinsSteps(penguin_data, user_choice, user_choice_maxDepth):
         macro_metrics['Top-MLP'].append(macro_f1)
         weighted_metrics['Top-MLP'].append(weighted_f1)
     #6 Appended Averages
-    appendperformance("penguins","Top-MLP", accuracy_metrics)
-    appendperformance("penguins","Top-MLP", macro_metrics)
-    appendperformance("penguins","Top-MLP", weighted_metrics)
+    appendperformance("penguins","Top-MLP", "Accuracy", accuracy_metrics)
+    appendperformance("penguins","Top-MLP", "Macro F1", macro_metrics)
+    appendperformance("penguins","Top-MLP", "Weighted F1", weighted_metrics)
     
 
 def abaloneSteps(abalone, user_choice_maxDepth):
@@ -296,9 +296,9 @@ def abaloneSteps(abalone, user_choice_maxDepth):
         macro_metrics['Base-DT'].append(macro_f1)
         weighted_metrics['Base-DT'].append(weighted_f1)
     #6 Appended Averages
-    appendperformance("abalone","Base-DT", accuracy_metrics)
-    appendperformance("abalone","Base-DT", macro_metrics)
-    appendperformance("abalone","Base-DT", weighted_metrics)
+    appendperformance("abalone","Base-DT", "Accuracy", accuracy_metrics)
+    appendperformance("abalone","Base-DT", "Macro F1", macro_metrics)
+    appendperformance("abalone","Base-DT", "Weighted F1", weighted_metrics)
     
     #4b) Top-DT for Abalone
     for i in range(RANGE):
@@ -311,9 +311,9 @@ def abaloneSteps(abalone, user_choice_maxDepth):
         macro_metrics['Top-DT'].append(macro_f1)
         weighted_metrics['Top-DT'].append(weighted_f1)
     #6 Appended Averages
-    appendperformance("abalone","Top-DT", accuracy_metrics)
-    appendperformance("abalone","Top-DT", macro_metrics)
-    appendperformance("abalone","Top-DT", weighted_metrics)
+    appendperformance("abalone","Top-DT", "Accuracy", accuracy_metrics)
+    appendperformance("abalone","Top-DT", "Macro F1", macro_metrics)
+    appendperformance("abalone","Top-DT", "Weighted F1", weighted_metrics)
     
     #4c) Base MLP for Abalone    
     for i in range(RANGE):
@@ -326,9 +326,9 @@ def abaloneSteps(abalone, user_choice_maxDepth):
         macro_metrics['Base-MLP'].append(macro_f1)
         weighted_metrics['Base-MLP'].append(weighted_f1)
     #6 Appended Averages
-    appendperformance("abalone","Base-MLP", accuracy_metrics)
-    appendperformance("abalone","Base-MLP", macro_metrics)
-    appendperformance("abalone","Base-MLP", weighted_metrics)
+    appendperformance("abalone","Base-MLP", "Accuracy", accuracy_metrics)
+    appendperformance("abalone","Base-MLP", "Macro F1", macro_metrics)
+    appendperformance("abalone","Base-MLP", "Weighted F1", weighted_metrics)
     
     #4d) Top MLP for Abalone
     for i in range(RANGE):
@@ -341,9 +341,9 @@ def abaloneSteps(abalone, user_choice_maxDepth):
         macro_metrics['Top-MLP'].append(macro_f1)
         weighted_metrics['Top-MLP'].append(weighted_f1)
     #6 Appended Averages
-    appendperformance("abalone","Top-MLP", accuracy_metrics)
-    appendperformance("abalone","Top-MLP", macro_metrics)
-    appendperformance("abalone","Top-MLP", weighted_metrics)
+    appendperformance("abalone","Top-MLP", "Accuracy", accuracy_metrics)
+    appendperformance("abalone","Top-MLP", "Macro F1", macro_metrics)
+    appendperformance("abalone","Top-MLP", "Weighted F1", weighted_metrics)
 
   
 def main():
